@@ -2,6 +2,4 @@
 /dist
 .DS_Store
 /coverage
-package-lock.json
-yarn.lock
 .env
