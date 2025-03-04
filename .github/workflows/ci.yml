@@ -31,7 +31,7 @@ jobs:
           cache: npm
 
       - name: Install packages
-        run: npm install
+        run: npm ci
 
       - name: Test library
         run: CI=true npm run test
@@ -57,7 +57,7 @@ jobs:
   #         cache: npm
 
   #     - name: Install packages
-  #       run: npm install
+  #       run: npm ci
 
   #     - name: Build Package
   #       run: npm run build
@@ -85,7 +85,7 @@ jobs:
   #         registry-url: 'https://registry.npmjs.org/'
 
   #     - name: Install Dependencies
-  #       run: npm install
+  #       run: npm ci
 
   #     - name: Build Package
   #       run: npm run build
