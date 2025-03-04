@@ -22,7 +22,7 @@ export const reducerSubscriber = <E extends BusEvent>(...definition: Subscriptio
 const useReducerCreator =
   <E extends BusEvent = BusEvent, T = any>(
     subscriber: SubscribeFn<E> = _defaultSubscriber,
-    useReducer: UseReducerFn<any, E> = React.useReducer
+    useReducer: UseReducerFn<T, E> = React.useReducer
   ) =>
   (reducer: ReducerFn<T, E>, initState: any, init: InitFn<T> = indentity) => {
     // Pull the bus from context
@@ -41,16 +41,15 @@ const useReducerCreator =
       [bus]
     );
 
-    return [state, dispatchFn];
+    return [state, dispatchFn] as [T, DispatchFn<E>];
   };
 
 export function useBusReducer<E extends BusEvent = BusEvent, T = any>(
   reducer: ReducerFn<T, E>,
-  initState: any,
+  initState: T,
   init: InitFn<T> = indentity
-) {
+): [T, DispatchFn<E>] {
   const useReducerFn = useReducerCreator(_defaultSubscriber);
-
   return useReducerFn(reducer, initState, init);
 }
 

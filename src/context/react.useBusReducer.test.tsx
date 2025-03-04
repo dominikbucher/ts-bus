@@ -266,7 +266,7 @@ it('should return a dispatch function that aliases bus.publish()', () => {
 
   act(() => {
     const dispatch = result.current[1];
-    dispatch({ type: 'count.increment', payload: null });
+    dispatch({ type: 'count.increment', payload: 0 });
   });
 
   expect(result.current[0].counter).toBe(1);
