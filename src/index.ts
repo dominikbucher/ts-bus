@@ -1,2 +1,3 @@
-export { EventBus } from "./EventBus";
-export { createEventDefinition } from "./EventDefinition";
+export { EventBus } from './EventBus';
+export type { BusEvent } from './EventBus';
+export { createEventDefinition } from './EventDefinition';
