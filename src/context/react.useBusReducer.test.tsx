@@ -1,16 +1,13 @@
-import { act, renderHook } from "@testing-library/react-hooks";
+import { render, renderHook, waitFor } from '@testing-library/react';
+import React, { act } from 'react';
+import { BusEvent, EventBus, SubscribeFn } from '../EventBus';
+import { createEventDefinition } from '../EventDefinition';
+import { bus, mockEventBus, wrapper } from '../testhelpers';
+import { useBus } from './BusContext';
+import { BusProvider, reducerSubscriber, useBusReducer } from './react';
+import { _defaultSubscriber } from './useBusReducer';
 
-import React from "react";
-
-import { BusProvider, useBusReducer, reducerSubscriber } from "./react";
-import { SubscribeFn, BusEvent } from "./types";
-import { _defaultSubscriber } from "./useBusReducer";
-import { mockEventBus, bus, wrapper } from "./testhelpers";
-import { createEventDefinition, EventBus } from "./EventBus";
-import { create } from "react-test-renderer";
-import { useBus } from "./BusContext";
-
-it("should not subscribe without unsubscribing (useBusReducer)", () => {
+it('should not subscribe without unsubscribing (useBusReducer)', () => {
   const mockBus = mockEventBus();
   // run once to subscribe to bus
   // type SubscribeFn = (d: any, b: any) => void;
@@ -24,10 +21,8 @@ it("should not subscribe without unsubscribing (useBusReducer)", () => {
       );
     },
     {
-      wrapper: ({ children }: { children?: React.ReactNode }) => (
-        <BusProvider value={mockBus}>{children}</BusProvider>
-      ),
-      initialProps: _defaultSubscriber
+      wrapper: ({ children }: { children?: React.ReactNode }) => <BusProvider value={mockBus}>{children}</BusProvider>,
+      initialProps: _defaultSubscriber,
     }
   );
 
@@ -39,32 +34,29 @@ it("should not subscribe without unsubscribing (useBusReducer)", () => {
   expect(mockBus._unsubscribe.mock.calls.length).toBe(2);
 });
 
-it("should not reduce for not subscribed event", () => {
+it('should not reduce for not subscribed event', () => {
   const { result } = renderHook(
     () => {
       const reducer = useBusReducer.configure({
-        subscriber: reducerSubscriber("increment", "decrement")
+        subscriber: reducerSubscriber('increment', 'decrement'),
       });
       return reducer(
-        (
-          state: { counter: number },
-          event: { type: string; payload: number }
-        ) => {
+        (state: { counter: number }, event: { type: string; payload: number }) => {
           switch (event.type) {
-            case "increment":
+            case 'increment':
               return {
                 ...state,
-                counter: state.counter + 1
+                counter: state.counter + 1,
               };
-            case "decrement":
+            case 'decrement':
               return {
                 ...state,
-                counter: state.counter - 1
+                counter: state.counter - 1,
               };
-            case "multiply": // Must never be called
+            case 'multiply': // Must never be called
               return {
                 ...state,
-                counter: state.counter * 100
+                counter: state.counter * 100,
               };
           }
           return state;
@@ -79,53 +71,50 @@ it("should not reduce for not subscribed event", () => {
   expect(result.current[0].counter).toBe(0);
 
   act(() => {
-    bus.publish({ type: "increment", payload: null });
-    bus.publish({ type: "multiply", payload: null });
-    bus.publish({ type: "increment", payload: null });
-    bus.publish({ type: "decrement", payload: null });
+    bus.publish({ type: 'increment', payload: null });
+    bus.publish({ type: 'multiply', payload: null });
+    bus.publish({ type: 'increment', payload: null });
+    bus.publish({ type: 'decrement', payload: null });
   });
 
   expect(result.current[0].counter).toBe(1);
 });
 
-it("should reduce using multiple event subscription types", () => {
-  const minusFour = createEventDefinition()("minusFour");
+it('should reduce using multiple event subscription types', () => {
+  const minusFour = createEventDefinition<number>()('minusFour');
 
   const { result } = renderHook(
     () => {
       const reducer = useBusReducer.configure({
         subscriber: reducerSubscriber(
-          "increment",
-          "decrement",
+          'increment',
+          'decrement',
           minusFour,
           (x: BusEvent) => x.payload !== null && x.payload >= 3
-        )
+        ),
       });
       return reducer(
-        (
-          state: { counter: number },
-          event: { type: string; payload: number }
-        ) => {
+        (state: { counter: number }, event: { type: string; payload: number }) => {
           switch (event.type) {
-            case "increment":
+            case 'increment':
               return {
                 ...state,
-                counter: state.counter + 1
+                counter: state.counter + 1,
               };
-            case "decrement":
+            case 'decrement':
               return {
                 ...state,
-                counter: state.counter - 1
+                counter: state.counter - 1,
               };
-            case "minusFour":
+            case 'minusFour':
               return {
                 ...state,
-                counter: state.counter - 4
+                counter: state.counter - 4,
               };
-            case "multiply":
+            case 'multiply':
               return {
                 ...state,
-                counter: state.counter * event.payload
+                counter: state.counter * event.payload,
               };
           }
           return state;
@@ -140,39 +129,36 @@ it("should reduce using multiple event subscription types", () => {
   expect(result.current[0].counter).toBe(0);
 
   act(() => {
-    bus.publish({ type: "increment", payload: null }); // Reaches reducer
-    bus.publish({ type: "increment", payload: null }); // Reaches reducer
-    bus.publish({ type: "decrement", payload: null }); // Reaches reducer
-    bus.publish({ type: "increment", payload: null }); // Reaches reducer
-    bus.publish({ type: "multiply", payload: 2 }); // Does not reach reducer
-    bus.publish({ type: "multiply", payload: 3 }); // Reaches reducer
-    bus.publish({ type: "multiply", payload: 4 }); // Reaches reducer
-    bus.publish({ type: "multiply", payload: 2 }); // Reaches reducer
-    bus.publish(minusFour()); // Reaches reducer
+    bus.publish({ type: 'increment', payload: null }); // Reaches reducer
+    bus.publish({ type: 'increment', payload: null }); // Reaches reducer
+    bus.publish({ type: 'decrement', payload: null }); // Reaches reducer
+    bus.publish({ type: 'increment', payload: null }); // Reaches reducer
+    bus.publish({ type: 'multiply', payload: 2 }); // Does not reach reducer
+    bus.publish({ type: 'multiply', payload: 3 }); // Reaches reducer
+    bus.publish({ type: 'multiply', payload: 4 }); // Reaches reducer
+    bus.publish({ type: 'multiply', payload: 2 }); // Reaches reducer
+    bus.publish(minusFour(0)); // Reaches reducer
   });
 
   expect(result.current[0].counter).toBe(20);
 });
 
-it("should reduce state", () => {
+it('should reduce state', () => {
   const { result } = renderHook(
     () =>
       useBusReducer(
-        (
-          state: { counter: number },
-          event: { type: string; payload: number }
-        ) => {
+        (state: { counter: number }, event: { type: string; payload: number }) => {
           switch (event.type) {
-            case "increment": {
+            case 'increment': {
               return {
                 ...state,
-                counter: state.counter + 1
+                counter: state.counter + 1,
               };
             }
-            case "decrement": {
+            case 'decrement': {
               return {
                 ...state,
-                counter: state.counter - 1
+                counter: state.counter - 1,
               };
             }
           }
@@ -187,43 +173,40 @@ it("should reduce state", () => {
   expect(result.current[0].counter).toBe(0);
 
   act(() => {
-    bus.publish({ type: "increment", payload: null });
-    bus.publish({ type: "increment", payload: null });
-    bus.publish({ type: "increment", payload: null });
+    bus.publish({ type: 'increment', payload: null });
+    bus.publish({ type: 'increment', payload: null });
+    bus.publish({ type: 'increment', payload: null });
   });
   expect(result.current[0].counter).toBe(3);
 });
 
-it("should subscribe state", () => {
+it('should subscribe state', () => {
   const { result } = renderHook(
     () => {
       const useReducer = useBusReducer.configure({
         subscriber: (dispatch, bus) => {
-          return bus.subscribe("count.**", dispatch);
-        }
+          return bus.subscribe('count.**', dispatch);
+        },
       });
       return useReducer(
-        (
-          state: { counter: number },
-          event: { type: string; payload: number }
-        ) => {
+        (state: { counter: number }, event: { type: string; payload: number }) => {
           switch (event.type) {
-            case "count.increment": {
+            case 'count.increment': {
               return {
                 ...state,
-                counter: state.counter + 1
+                counter: state.counter + 1,
               };
             }
-            case "count.decrement": {
+            case 'count.decrement': {
               return {
                 ...state,
-                counter: state.counter - 1
+                counter: state.counter - 1,
               };
             }
-            case "reset": {
+            case 'reset': {
               return {
                 ...state,
-                counter: 0
+                counter: 0,
               };
             }
           }
@@ -238,39 +221,36 @@ it("should subscribe state", () => {
   expect(result.current[0].counter).toBe(0);
 
   act(() => {
-    bus.publish({ type: "count.increment", payload: null });
-    bus.publish({ type: "reset", payload: null });
+    bus.publish({ type: 'count.increment', payload: null });
+    bus.publish({ type: 'reset', payload: null });
   });
 
   // Reset should have no effect because of subscriber
   expect(result.current[0].counter).toBe(1);
 });
 
-it("should return a dispatch function that aliases bus.publish()", () => {
+it('should return a dispatch function that aliases bus.publish()', () => {
   const { result } = renderHook(
     () => {
       return useBusReducer(
-        (
-          state: { counter: number },
-          event: { type: string; payload: number }
-        ) => {
+        (state: { counter: number }, event: { type: string; payload: number }) => {
           switch (event.type) {
-            case "count.increment": {
+            case 'count.increment': {
               return {
                 ...state,
-                counter: state.counter + 1
+                counter: state.counter + 1,
               };
             }
-            case "count.decrement": {
+            case 'count.decrement': {
               return {
                 ...state,
-                counter: state.counter - 1
+                counter: state.counter - 1,
               };
             }
-            case "reset": {
+            case 'reset': {
               return {
                 ...state,
-                counter: 0
+                counter: 0,
               };
             }
           }
@@ -286,18 +266,16 @@ it("should return a dispatch function that aliases bus.publish()", () => {
 
   act(() => {
     const dispatch = result.current[1];
-    dispatch({ type: "count.increment", payload: null });
+    dispatch({ type: 'count.increment', payload: null });
   });
 
   expect(result.current[0].counter).toBe(1);
 });
 
-it("should use an alternate useReducer", () => {
-  const mockUseReducer = jest.fn(
-    (reducer: any, initialState: any, initializer: any) => {
-      return React.useReducer(reducer, initialState, initializer);
-    }
-  );
+it('should use an alternate useReducer', () => {
+  const mockUseReducer = jest.fn((reducer: any, initialState: any, initializer: any) => {
+    return React.useReducer(reducer, initialState, initializer);
+  });
 
   const reducer = (state: { counter: number }) => {
     return state;
@@ -307,7 +285,7 @@ it("should use an alternate useReducer", () => {
   renderHook(
     () => {
       const useReducer = useBusReducer.configure({
-        useReducer: mockUseReducer
+        useReducer: mockUseReducer,
       });
       return useReducer(reducer, init, ident);
     },
@@ -317,12 +295,12 @@ it("should use an alternate useReducer", () => {
   expect(mockUseReducer).toBeCalledWith(reducer, init, ident);
 });
 
-it("should not loose events during the render cycle when mounted.", done => {
+it('should not loose events during the render cycle when mounted.', async () => {
   const myBus = new EventBus();
-  const reducer = jest.fn(s => s);
+  const reducer = jest.fn((s) => s);
 
-  const EVENT_DELAY = { type: "myevent", payload: "DELAY" };
-  const EVENT_URGENT = { type: "myevent", payload: "URGENT" };
+  const EVENT_DELAY = { type: 'myevent', payload: 'DELAY' };
+  const EVENT_URGENT = { type: 'myevent', payload: 'URGENT' };
 
   function MyContextProvider(props: { children: any }) {
     useBusReducer(reducer, {});
@@ -358,12 +336,13 @@ it("should not loose events during the render cycle when mounted.", done => {
 
   // render the component
   act(() => {
-    create(<App />);
+    render(<App />);
   });
 
-  setTimeout(() => {
+  await waitFor(() => new Promise((resolve) => setTimeout(resolve, 5)));
+
+  act(() => {
     const eventList = reducer.mock.calls.map(([, ev]: any[]) => ev);
     expect(eventList).toEqual([EVENT_URGENT, EVENT_DELAY]);
-    done();
-  }, 0);
+  });
 });

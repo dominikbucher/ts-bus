@@ -1,10 +1,10 @@
-import React from "react";
-import { EventBus } from "./EventBus";
+import React from 'react';
+import { EventBus } from './EventBus';
 
 export const bus = new EventBus();
 
-import { EventEmitter2 } from "eventemitter2";
-import { BusProvider } from "./BusContext";
+import { EventEmitter2 } from 'eventemitter2';
+import { BusProvider } from './context/BusContext';
 
 export function mockEventBus() {
   const _unsubscribe = jest.fn();

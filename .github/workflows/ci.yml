@@ -1,0 +1,96 @@
+name: Test, build, and publish library
+
+on:
+  workflow_dispatch: # So that we can manually trigger this workflow, if required.
+  push:
+    branches:
+      - master
+      - develop
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install packages
+        run: npm install
+
+      - name: Test library
+        run: CI=true npm run test
+
+      - name: Build library
+        run: CI=true npm run build
+
+  # build:
+  #   name: Build Package
+  #   runs-on: ubuntu-latest
+  #   needs: test
+  #   timeout-minutes: 15
+  #   if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 18
+  #         cache: npm
+
+  #     - name: Install packages
+  #       run: npm install
+
+  #     - name: Build Package
+  #       run: npm run build
+
+  #     - name: Upload Build Artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: npm-build
+  #         path: ./dist
+
+  # publish:
+  #   name: Publish to NPM
+  #   runs-on: ubuntu-latest
+  #   needs: build
+  #   if: startsWith(github.ref, 'refs/tags/v')
+
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 18
+  #         registry-url: 'https://registry.npmjs.org/'
+
+  #     - name: Install Dependencies
+  #       run: npm install
+
+  #     - name: Build Package
+  #       run: npm run build
+
+  #     - name: Publish to NPM
+  #       run: npm publish --access public
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
